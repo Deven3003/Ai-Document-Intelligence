@@ -1,0 +1,33 @@
+#python
+__pycache__/
+*.py[cod]
+
+#virtual enviroment
+.venv/
+venv/
+env/
+
+#Enviroment variable
+.env
+
+#IDE
+.vscode/
+.idea/
+
+#OS
+.DS_Store
+
+#logs
+*.log
+
+#Test/coverage
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+#generated data
+data/vector_store/
+
+#temprory files
+*.temp
