@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from src.config import settings
 from src.services.logger import get_logger
 from src.rag_service import initialize_rag,ask_question
-from pydantic import BaseModel
+from src.repositories.conversation_repository import create_conversation,get_message,save_message
+from pydantic import BaseModel,Field
 
 logger =get_logger(__name__)
 
@@ -19,12 +20,18 @@ class Source(BaseModel):
     page_number:int
     score:float
 
+class ConversationMessage(BaseModel):
+    role:str
+    content:str
+
 class QuestionResponse(BaseModel):
     answer: str
     sources: list[Source]
 
 class QuestionRequest(BaseModel):
-    question :str
+    conversation_id: int
+    question :str =Field(...,min_length=1)
+    #conversation_history:list[ConversationMessage] =Field(default_factory=list) /*commented*/
 
 @app.on_event("startup")
 def startup_event():
@@ -51,6 +58,59 @@ def ask(request : QuestionRequest):
         request.question
     )
 
-    result = ask_question(request.question)
+    try:
+        conversation_history =get_message(
+            request.conversation_id
+        )
+        result = ask_question(
+            request.question,
+            conversation_history)
 
-    return result
+        logger.info("Question Processed Successfully....")
+
+        #save users question
+        save_message(
+            request.conversation_id,
+            "user",
+            request.question
+        )
+
+        #Save AI answer
+        save_message(
+            request.conversation_id,
+            "assistant",
+            result["answer"]
+        )
+
+
+        return result
+    except:
+        logger.exception("Error whille processing question")
+
+        raise HTTPException(
+            status_code=500,
+            detail="An Interal server error occured while processing question "
+        )
+
+@app.post("/conversations")
+def create_new_conversation():
+    try:
+        conversation_id =create_conversation(
+            user_id=1,
+            title='New Conversation'
+        )
+
+        logger.info(
+            "conversation created successfully:%d",conversation_id
+        )
+
+        return{
+            "conversation_id":conversation_id
+        }
+
+    except Exception:
+        logger.exception("Failed to create conversation")
+        raise HTTPException(
+            status_code=500,
+            detail="failed to create conversation"
+        )

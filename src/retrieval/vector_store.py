@@ -1,35 +1,54 @@
 import faiss
 import numpy as np
+from src.services.logger import get_logger
 
-print("inside FAISS")
+logger =get_logger(__name__)
+logger.info("Entered inside Vector_Store")
 
 Dimensions= 384
 
 def create_index():
-    index =faiss.IndexFlatIP(Dimensions)
+    try:
+        logger.info("Creating FAISS indes using %d Dimensions",Dimensions)
+        index =faiss.IndexFlatIP(Dimensions)
+        logger.info("FAISS Index created successfully")
+        return index
 
-    return index
-
-Index =create_index()
-
-print("Index is ::",Index)
+    except Exception:
+        logger.exception("Failed to create FAISS Index")
+        raise
+        
 
 def add_embeddings(index, embeddings):
-    vectors = np.array(embeddings).astype("float32")
+    try:
+        logger.info("Adding %d Embeddings to FAISS Index",embeddings)
+        vectors = np.array(embeddings).astype("float32")
 
-    faiss.normalize_L2(vectors)
+        faiss.normalize_L2(vectors)
 
-    index.add(vectors)
+        index.add(vectors)
+        logger.info("successfully added %d vectors to FAISS index",len(vectors))
+        return index
 
-    return index
+    except Exception:
+        logger.exception("Failed to add embeddings to FAISS index")
+        raise
 
 def search_index(index, query_embedding, top_k=3):
+    try:
+        logger.info("Stared searching index using query embeddings")
 
-    query_vector =np.array([query_embedding]).astype("float32")
+        query_vector =np.array([query_embedding]).astype("float32")
 
-    faiss.normalize_L2(query_vector)
+        faiss.normalize_L2(query_vector)
 
-    scores , indices =index.search(query_vector, top_k)
+        scores , indices =index.search(query_vector, top_k)
 
-    return scores, indices
+        logger.info("successfully generated scores and indices inside search index")
+        logger.info("FAISS similarity search completed successfully...")
+        return scores, indices
+
+    except Exception:
+        logger.exception("Failed to search index using query embeddings")
+        raise
 

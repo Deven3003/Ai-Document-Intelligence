@@ -19,6 +19,7 @@ env/
 
 #logs
 *.log
+logs/
 
 #Test/coverage
 
