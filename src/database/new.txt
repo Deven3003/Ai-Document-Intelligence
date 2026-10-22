@@ -1,0 +1,1 @@
+create table conversation_message (id BIGSERIAL PRIMARY KEY,conversation_id BIGINT NOT NULL,content TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP); 
